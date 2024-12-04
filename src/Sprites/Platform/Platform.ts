@@ -16,12 +16,13 @@ export class Platform extends Graphics implements IPhysicsObj {
     }
 
     public get boundingBox() {
-        return {
-            x: this.x,
-            y: this.y,
-            w: this.width,
-            h: this.height,
-        }
+        return this.getBounds()
+        // return {
+        //     x: this.x,
+        //     y: this.y,
+        //     w: this.width,
+        //     h: this.height,
+        // }
     }
 
     public onCollision<T extends IPhysicsObj>(a: T) {

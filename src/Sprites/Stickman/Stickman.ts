@@ -1,9 +1,10 @@
-import { AnimatedSprite, Assets, Container, Texture, Ticker } from "pixi.js";
+import { AnimatedSprite, Assets, Container, Graphics, Texture, Ticker } from "pixi.js";
 import axios from "axios";
 import { INode } from "../../Scenes/types";
 import { StickmanAnimationStateMachine } from "./StickmanStateMachine";
 import { appDetails } from "../../main";
 import { IPhysicsObj } from "../../Physics/types";
+import { GRAVITY } from "../../Physics/Constants";
 
 export class Stickman implements INode, IPhysicsObj {
     public name: string;
@@ -12,6 +13,7 @@ export class Stickman implements INode, IPhysicsObj {
     private animationStateMachine!: StickmanAnimationStateMachine
     private static animations: Record<string, Record<string, Record<string, string[]>>> = {}
     private scene!: Container
+    private bb!: Graphics
 
     private curSkin = "Black"
     private curWeapon = "1_"
@@ -19,6 +21,7 @@ export class Stickman implements INode, IPhysicsObj {
     private prevAnimation = ""
 
     private isReady = false
+    private isCollision = false
 
     public constructor(scene: Container, name: string) {
         this.animationStateMachine = new StickmanAnimationStateMachine()
@@ -35,12 +38,7 @@ export class Stickman implements INode, IPhysicsObj {
     }
     public get boundingBox() {
         if (!this.sprite) return
-        return {
-            x: this.sprite.x,
-            y: this.sprite.y,
-            w: this.sprite.width,
-            h: this.sprite.height,
-        }
+        return this.sprite.getBounds()
     }
 
     public async initialize() {
@@ -52,17 +50,24 @@ export class Stickman implements INode, IPhysicsObj {
         }
 
         this.sprite = new AnimatedSprite(this.getTextures())
+        this.sprite.anchor = 0.5
         this.scene.addChild(this.sprite)
 
         this.sprite.animationSpeed = 0.5
         this.sprite.play()
 
         this.sprite.scale = 0.2
-        this.sprite.alpha = 1
         this.sprite.x = appDetails.width / 2
-        this.sprite.y = appDetails.height / 2
+        this.sprite.y = this.sprite.height / 2
 
-        this.sprite.anchor = 0.5
+        const bounds = this.boundingBox
+        if (bounds) {
+            this.bb = new Graphics()
+                .rect(bounds.x, bounds.y, bounds.width, bounds.height)
+                .fill(0xffffff)
+            this.bb.alpha = 0.5
+            this.scene.addChild(this.bb)
+        }
 
         this.isReady = true
     }
@@ -74,6 +79,9 @@ export class Stickman implements INode, IPhysicsObj {
     public update(dt: Ticker) {
         if (!this.isReady) return
         this.animationStateMachine.update(this)
+
+        if (this.isCollision) return
+        this.sprite.y += GRAVITY * dt.deltaTime
     }
 
     public async setSkin(newSkin: string) {
@@ -126,7 +134,6 @@ export class Stickman implements INode, IPhysicsObj {
         this.sprite.textures = this.getTextures()
         this.sprite.loop = false
         this.sprite.onComplete = (async () => {
-            console.log("animation complete")
             await this.setAnimation(this.prevAnimation)
             this.prevAnimation = ""
             this.sprite.onComplete = undefined
@@ -155,6 +162,6 @@ export class Stickman implements INode, IPhysicsObj {
     }
 
     public onCollision<T extends IPhysicsObj>(a: T) {
-
+        this.isCollision = true
     }
 }

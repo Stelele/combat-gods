@@ -6,8 +6,8 @@ import { KeyboardInputHandler } from "./InputHandling/KeyboardInputHandler"
 
 export let app: Application
 export const appDetails = {
-  width: 1366,
-  height: 768,
+  width: 800,
+  height: 600,
   backgroundColor: "#1099bb"
 }
 
