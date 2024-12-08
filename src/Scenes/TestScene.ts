@@ -8,6 +8,7 @@ import { Physics } from "../Physics/Physics";
 export class TestScene extends Container implements INode {
     private stickman: Stickman
     private platform: Platform
+    private assetsReady = false
 
     public constructor() {
         super()
@@ -21,6 +22,7 @@ export class TestScene extends Container implements INode {
 
     public async initialize() {
         await this.stickman.initialize()
+        this.assetsReady = true
     }
 
     public async leave() {
@@ -28,7 +30,8 @@ export class TestScene extends Container implements INode {
     }
 
     public update(dt: Ticker) {
+        if (!this.assetsReady) return
         this.stickman.update(dt)
-        Physics.isCollision(this.stickman, this.platform)
+        Physics.isCollision(this.stickman, this.platform, dt)
     }
 }
